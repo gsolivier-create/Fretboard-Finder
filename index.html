@@ -154,6 +154,11 @@ ol.rounds li::marker { color: var(--muted); font-variant-numeric: tabular-nums; 
 .split { display: flex; gap: 12px; }
 .split .primary { flex: 2; }
 .split .quiet { flex: 1; border-radius: 18px; min-height: 64px; }
+
+/* Countdown */
+.countdown { text-align: center; padding: 60px 0; }
+.countdown .say { color: var(--muted); font-size: 20px; }
+.cnum { font: 600 clamp(120px, 34vw, 220px)/1 var(--serif); margin-top: 6px; }
 </style>
 </head>
 <body>
@@ -179,6 +184,12 @@ ol.rounds li::marker { color: var(--muted); font-variant-numeric: tabular-nums; 
 </section>
 
 <section id="play" hidden>
+  <div class="countdown" id="countdown" aria-live="assertive">
+    <div class="say">Get ready</div>
+    <div class="cnum" id="cnum">5</div>
+  </div>
+
+  <div id="playInner">
   <div class="topbar">
     <span id="roundLbl">Round 1 of 10</span>
     <span class="timer" id="timerLbl">0.0 s</span>
@@ -201,6 +212,7 @@ ol.rounds li::marker { color: var(--muted); font-variant-numeric: tabular-nums; 
   <div class="actions">
     <button class="quiet" id="skipBtn" type="button">Skip this one</button>
     <button class="quiet" id="quitBtn" type="button">Quit</button>
+  </div>
   </div>
 </section>
 
@@ -358,7 +370,19 @@ ol.rounds li::marker { color: var(--muted); font-variant-numeric: tabular-nums; 
     $('msg').textContent = '';
     try { await initAudio(); }
     catch (e) { show('setup'); $('msg').textContent = micMessage(e); return; }
-    beginGame();
+    countdown(5);
+  }
+
+  function countdown(n) {
+    show('play');
+    $('countdown').hidden = false;
+    $('playInner').hidden = true;
+    $('cnum').textContent = n;
+    if (countdown.timer) clearTimeout(countdown.timer);
+    countdown.timer = setTimeout(function () {
+      if (n > 1) countdown(n - 1);
+      else { $('countdown').hidden = true; $('playInner').hidden = false; beginGame(); }
+    }, 1000);
   }
 
   function beginGame() {
@@ -465,6 +489,7 @@ ol.rounds li::marker { color: var(--muted); font-variant-numeric: tabular-nums; 
   }
 
   function quit() {
+    if (countdown.timer) { clearTimeout(countdown.timer); countdown.timer = null; }
     if (game && game.timeout) clearTimeout(game.timeout);
     game = null;
     $('play').classList.remove('hit');
